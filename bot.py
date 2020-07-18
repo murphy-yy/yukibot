@@ -4,12 +4,18 @@ import pprint
 import string
 import urllib.parse
 import urllib.request
+import asyncio
+import glob
+import os
 
 import discord
 
 from config import *
+from collections import deque
 
 yomiage_binds = {}
+
+yomiage_queue = {}
 
 
 async def reset_color(member):
@@ -154,6 +160,34 @@ async def command_worker(botx, message, name, args):
         await message.channel.send(f"色を #{color} に変更しました。")
 
 
+async def yomiage_queue_worker(botx):
+    [os.remove(file) for file in glob.glob("*.mp3") if os.path.isfile(file)]
+
+    while True:
+        for voice_channel_id, dq in [(x, y) for x, y in yomiage_queue.items() if y]:
+            filename = dq.popleft()
+
+            voice_client = discord.utils.find(
+                lambda x: x.channel.id == voice_channel_id, botx.voice_clients
+            )
+
+            while voice_client.is_playing():
+                await asyncio.sleep(0.05)
+
+            print(f"再生中: {filename}")
+            source = await discord.FFmpegOpusAudio.from_probe(filename)
+            voice_client.play(source)
+
+            while voice_client.is_playing():
+                await asyncio.sleep(0.05)
+
+            print(f"削除中: {filename}")
+            if os.path.isfile(filename):
+                os.remove(filename)
+
+        await asyncio.sleep(0.05)
+
+
 class Bot(discord.Client):
     async def on_ready(self):
         user = self.user
@@ -161,6 +195,8 @@ class Bot(discord.Client):
         print(f"{user} でログイン完了！ (管理者: {appinfo.owner})")
 
         self.appinfo = appinfo
+
+        await yomiage_queue_worker(self)
 
     async def on_message(self, message):
         if message.author.bot:
@@ -195,16 +231,15 @@ class Bot(discord.Client):
             print(f"    -> {encoded_text}")
             url = YOMIAGE_SOUND_URL.replace("<ENCODED_TEXT>", encoded_text)
             print(f"    -> {url}")
-            filename = f"{voice_channel.id}.mp3"
+            filename = f"{message.id}.mp3"
             print(f"  - {filename}")
 
             print(f"ダウンロード中: {filename}")
             urllib.request.urlretrieve(url, filename)
 
-            print(f"再生中: {filename}")
-            source = await discord.FFmpegOpusAudio.from_probe(filename)
-            voice_client.stop()
-            voice_client.play(source)
+            print(f"キューに追加: {filename}")
+            yomiage_queue.setdefault(voice_channel.id, deque())
+            yomiage_queue[voice_channel.id].append(filename)
 
 
 print("ログイン中...")
