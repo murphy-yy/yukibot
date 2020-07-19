@@ -12,6 +12,7 @@ class ManageCog(commands.Cog):
         info = await self.bot.application_info()
         owner = info.owner
         print(f"{user} でログイン完了！ (管理者: {owner})")
+
         self.owner = owner
 
     @commands.command(help="このボットを終了します。 (管理者のみ)")

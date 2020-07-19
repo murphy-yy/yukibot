@@ -1,3 +1,4 @@
+import discord
 from colour import Color
 from discord.ext import commands
 
@@ -6,6 +7,9 @@ class ColorCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.role_name = "すごい染料"
+
+    def cog_check(self, ctx):
+        return ctx.guild
 
     def get_color(self, text):
         try:
@@ -16,6 +20,9 @@ class ColorCog(commands.Cog):
     def rgb2int(self, rgb):
         r, g, b = rgb
         return (int(r * 255) << 16) + (int(g * 255) << 8) + int(b * 255)
+
+    def color_roles(self, member):
+        return [r for r in member.roles if r.name == self.role_name]
 
     @commands.command(help="名前に色を付けます。")
     async def color(self, ctx):
@@ -30,7 +37,13 @@ class ColorCog(commands.Cog):
 
         re = await self.bot.wait_for("message", check=check)
         color = self.get_color(re.content)
-        hex_l = color.get_hex_l()
-        int_color = self.rgb2int(color.get_rgb())
-        await ctx.send(f"名前の色を {hex_l} ({int_color}) に変更しました。 (テスト)")
+        hx = color.get_hex_l()
+        i = self.rgb2int(color.get_rgb())
+        member = discord.utils.find(lambda m: m.id == ctx.author.id, ctx.guild.members)
 
+        for r in self.color_roles(member):
+            await r.delete()
+
+        r = await ctx.guild.create_role(name=self.role_name, color=discord.Colour(i))
+        await member.add_roles(r)
+        await ctx.send(f"名前の色を {hx} ({i}) に変更しました。")
