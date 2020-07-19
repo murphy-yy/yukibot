@@ -63,6 +63,7 @@ class ColorCog(commands.Cog):
         p = await ctx.send("色の権限を削除しています...")
         for r in self.color_roles_of(member):
             await r.delete()
+
         await p.edit(content="名前の色をリセットしました！")
 
     @commands.command(help="不要な色の権限を削除します。")
@@ -71,4 +72,5 @@ class ColorCog(commands.Cog):
         targets = self.empty_color_roles(ctx.guild)
         for r in targets:
             await r.delete()
+
         await p.edit(content=f"不要な {len(targets)} 個の {self.role_name} を削除しました。")
