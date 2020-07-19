@@ -41,9 +41,14 @@ class ColorCog(commands.Cog):
         i = self.rgb2int(color.get_rgb())
         member = discord.utils.find(lambda m: m.id == ctx.author.id, ctx.guild.members)
 
+        p = await ctx.send("`(1/3)` 古い権限を削除しています...")
         for r in self.color_roles(member):
             await r.delete()
 
+        await p.edit(content="`(2/3)` 新しい権限を作成しています...")
         r = await ctx.guild.create_role(name=self.role_name, color=discord.Colour(i))
+
+        await p.edit(content="`(3/3)` 権限を付与しています...")
         await member.add_roles(r)
-        await ctx.send(f"名前の色を {hx} ({i}) に変更しました。")
+
+        await p.edit(content=f"名前の色を {hx} ({i}) に変更しました。")
