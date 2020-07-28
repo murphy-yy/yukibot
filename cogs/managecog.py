@@ -8,16 +8,11 @@ class ManageCog(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        user = self.bot.user
-        info = await self.bot.application_info()
-        owner = info.owner
-        print(f"{user} でログイン完了！ (管理者: {owner})")
-
-        self.owner = owner
+        print(f"{self.bot.user} でログイン完了！")
 
     @commands.command(help="このボットを終了します。 (管理者のみ)")
     async def stop(self, ctx):
-        if ctx.author.id == self.owner.id:
+        if await self.bot.is_owner(ctx.author):
             print(f"{ctx.author} からの命令により終了中...")
             await ctx.send("ボットを終了しています...")
             await self.bot.logout()
@@ -26,6 +21,6 @@ class ManageCog(commands.Cog):
 
     @commands.command(help="このボットのデバッグ情報をコンソールに出力します。 (管理者のみ)")
     async def dump(self, ctx):
-        if ctx.author.id == self.owner.id:
+        if await self.bot.is_owner(ctx.author):
             pp = pprint.PrettyPrinter(indent=4)
             pp.pprint([cog.__dict__ for cog in self.bot.cogs.values()])
