@@ -108,7 +108,7 @@ class YomiageCog(commands.Cog):
 
         self.binds.pop(vc.id, None)
 
-        for audio in self.queues.get(vc.id):
+        for audio in self.queues.get(vc.id, []):
             _, src, after = audio
             src.cleanup()
             after(None)
