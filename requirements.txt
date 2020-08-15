@@ -1,2 +1,2 @@
-discord.py[voice]==1.4.0
+discord.py[voice]==1.4.1
 colour==0.1.5
