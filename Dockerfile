@@ -5,8 +5,15 @@ COPY . /app
 WORKDIR /app
 
 RUN set -e \
-	&& apk --no-cache add py3-pip py3-yarl ffmpeg \
-	&& pip install -r requirements.txt
+	&& apk --no-cache add \
+		py3-pip \
+		ffmpeg \
+	&& apk --no-cache add --virtual .build-deps \
+		libffi-dev \
+		build-base \
+		python3-dev \
+	&& pip install -r requirements.txt \
+	&& apk --no-cache del .build-deps
 
 ENV PYTHONUNBUFFERED 1
 
