@@ -1,11 +1,11 @@
-import discord
 import urllib.parse
 import urllib.request
 import uuid
-from pathlib import Path
 from collections import deque
-from discord.ext import commands
-from discord.ext import tasks
+from pathlib import Path
+
+import discord
+from discord.ext import commands, tasks
 
 
 class YomiageCog(commands.Cog):

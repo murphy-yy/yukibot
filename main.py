@@ -1,15 +1,16 @@
 import os
-from cogs.managecog import ManageCog
-from cogs.colorcog import ColorCog
-from cogs.yomiagecog import YomiageCog
+
 from discord.ext import commands
 
+from cogs.colorcog import ColorCog
+from cogs.managecog import ManageCog
+from cogs.yomiagecog import YomiageCog
 
 if __name__ == "__main__":
     token = os.environ["TOKEN"]
 
     print("準備中...")
-    bot = commands.Bot("/", description="YukiBot v2.0 [2020/07/29 更新]")
+    bot = commands.Bot("/", description="YukiBot v3 [2020/09/27 更新]")
     bot.add_cog(ManageCog(bot))
     bot.add_cog(ColorCog(bot))
     bot.add_cog(YomiageCog(bot))

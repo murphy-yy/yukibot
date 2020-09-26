@@ -24,4 +24,4 @@ jobs:
       - run: gcloud auth configure-docker
       - run: docker build -t $IMAGE .
       - run: docker push $IMAGE
-      - run: gcloud run deploy $SERVICE_NAME --image $IMAGE --region $REGION --platform managed
+      - run: gcloud run deploy $SERVICE_NAME --image $IMAGE --region $REGION --platform managed --update-env-vars ${{ secrets.ENV_VARS }}
