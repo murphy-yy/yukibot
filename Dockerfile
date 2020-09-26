@@ -16,4 +16,4 @@ RUN set -e \
 
 ENV PYTHONUNBUFFERED 1
 
-CMD ["bash", "-c", "'python -m http.server 8080 & : && python main.py'"]
+CMD ["bash", "run.sh"]
