@@ -49,6 +49,7 @@ class Listener : ListenerAdapter() {
     override fun onMessageReceived(event: MessageReceivedEvent) {
         if (event.author.isBot)
             return
+
         val text = event.message.contentRaw
         if (!text.startsWith(prefix))
             return
@@ -73,6 +74,7 @@ class Listener : ListenerAdapter() {
             "im" -> {
                 if (!event.isFromGuild)
                     return
+
                 val nick = args.joinToString(" ")
                 event.guild.modifyNickname(event.guild.selfMember, nick).queue()
                 if (nick.isBlank()) {
@@ -84,13 +86,14 @@ class Listener : ListenerAdapter() {
             "color" -> {
                 if (!event.isFromGuild)
                     return
+
                 if (args.isEmpty()) {
                     event.member!!.roles.filter { it.name == colorRoleName }.forEach { it.delete().queue() }
                     event.channel.popup(null, "名前の色がリセットされました。 :sparkles:").queue()
                 } else {
                     val hex = args.first()
                     val rgb = hex.convertHexToInt() ?: return
-                    val color = Color.decode("$rgb")
+                    val color = Color(rgb)
                     event.member!!.roles.filter { it.name == colorRoleName }.forEach { it.delete().queue() }
                     event.guild.createRole().setName(colorRoleName).setColor(color).queue { role ->
                         event.guild.addRoleToMember(event.member!!, role).queue()
@@ -101,12 +104,15 @@ class Listener : ListenerAdapter() {
             "yomi" -> {
                 if (!event.isFromGuild)
                     return
+
+                val read = event.textChannel
                 val vc = event.member!!.voiceState?.channel
-                if (vc == null) {
+                if (vc != null) {
+                    event.guild.audioManager.openAudioConnection(vc)
+                    event.channel.popup(Color.CYAN, "${vc.name} にて ${read.asMention} の読み上げを開始しました。 :sound:").queue()
+                } else {
                     event.channel.popup(Color.RED, "まずボイスチャンネルに接続してください。").queue()
-                    return
                 }
-                event.guild.audioManager.openAudioConnection(vc)
             }
         }
     }
