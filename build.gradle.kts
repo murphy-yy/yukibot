@@ -14,6 +14,8 @@ repositories {
 dependencies {
     implementation(kotlin("stdlib"))
     implementation("net.dv8tion:JDA:4.2.0_209")
+    implementation("com.jagrosh:jda-utilities:3.0.4")
+    implementation("com.vdurmont:emoji-java:5.1.1")
 }
 
 tasks {
