@@ -16,6 +16,7 @@ dependencies {
     implementation("net.dv8tion:JDA:4.2.0_209")
     implementation("com.jagrosh:jda-utilities:3.0.4")
     implementation("com.vdurmont:emoji-java:5.1.1")
+    implementation("com.sedmelluq:lavaplayer:1.3.50")
 }
 
 tasks {

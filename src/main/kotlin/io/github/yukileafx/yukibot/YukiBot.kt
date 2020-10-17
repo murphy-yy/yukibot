@@ -3,6 +3,7 @@ package io.github.yukileafx.yukibot
 import com.jagrosh.jdautilities.command.CommandClientBuilder
 import com.vdurmont.emoji.EmojiParser
 import io.github.yukileafx.yukibot.command.*
+import io.github.yukileafx.yukibot.talk.TalkManager
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.JDABuilder
 import net.dv8tion.jda.api.entities.Activity
@@ -19,9 +20,9 @@ fun main() {
     println("${jda.selfUser} でログイン完了！")
 
     val ownerId = jda.retrieveApplicationInfo().complete().owner.id
-    val yomiBinds = mutableMapOf<String, Set<String>>().withDefault { setOf() }
+    val talkManager = TalkManager()
 
-    val client = CommandClientBuilder()
+    val clientBuilder = CommandClientBuilder()
         .setOwnerId(ownerId)
         .setPrefix("/")
         .setEmojis(null, null, ":x:".emoji())
@@ -30,8 +31,10 @@ fun main() {
         .addCommand(StopCommand())
         .addCommand(ImCommand())
         .addCommand(ColorCommand())
-        .addCommand(YomiCommand(yomiBinds))
-    jda.addEventListener(client.build())
+        .addCommand(YomiCommand(talkManager))
+    jda.addEventListener(clientBuilder.build())
+
+    jda.addEventListener(talkManager)
 }
 
 fun MessageChannel.popup(color: Color?, text: String) {
