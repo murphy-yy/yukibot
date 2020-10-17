@@ -34,8 +34,7 @@ tasks {
         }
     }
 
-    build {
+    task("stage") {
         dependsOn("clean", "shadowJar")
-        mustRunAfter("clean")
     }
 }
