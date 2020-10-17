@@ -59,7 +59,11 @@ class TalkManager : ListenerAdapter() {
 
     private fun File.toOpusWithFFmpeg(): File {
         val opus = dataDir.also { it.mkdirs() }.resolve("${UUID.randomUUID()}.opus")
-        Runtime.getRuntime().exec("ffmpeg -i \"$this\" -acodec libopus \"$opus\"").waitFor()
+        ProcessBuilder(listOf("ffmpeg", "-i", "\"$this\"", "-acodec", "libopus", "\"$opus\""))
+            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
+            .redirectError(ProcessBuilder.Redirect.INHERIT)
+            .start()
+            .waitFor()
         delete()
         return opus
     }
