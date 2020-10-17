@@ -29,7 +29,16 @@ class TalkManager : ListenerAdapter() {
             vc.guild.audioManager.sendingHandler = AudioPlayerSendHandler(audioPlayer)
             TrackScheduler(audioPlayer).also { audioPlayer.addListener(it) }
         }
+        println(schedulers)
         vc.guild.audioManager.openAudioConnection(vc)
+    }
+
+    fun remove(vc: VoiceChannel) {
+        vc.guild.audioManager.closeAudioConnection()
+        schedulers.remove(vc.guild.id)
+        println(schedulers)
+        binds.remove(vc.id)
+        println(binds)
     }
 
     private fun queue(vc: VoiceChannel, localPath: String) {

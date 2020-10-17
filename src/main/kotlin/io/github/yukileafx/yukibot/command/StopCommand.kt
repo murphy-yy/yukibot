@@ -14,7 +14,7 @@ class StopCommand : Command() {
 
     override fun execute(event: CommandEvent) {
         if (event.isOwner) {
-            event.channel.popup(Color.GREEN, "ボットを停止しています。 :scream:")
+            event.channel.popup(Color.YELLOW, "ボットを停止しています。 :scream:")
             event.jda.shutdown()
         } else {
             val owner = event.jda.getUserById(event.client.ownerId) ?: return

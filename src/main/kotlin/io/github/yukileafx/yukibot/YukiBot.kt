@@ -32,6 +32,7 @@ fun main() {
         .addCommand(ImCommand())
         .addCommand(ColorCommand())
         .addCommand(YomiCommand(talkManager))
+        .addCommand(NoYomiCommand(talkManager))
     jda.addEventListener(clientBuilder.build())
 
     jda.addEventListener(talkManager)
