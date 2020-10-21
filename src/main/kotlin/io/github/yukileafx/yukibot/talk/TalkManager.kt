@@ -10,14 +10,12 @@ import java.io.File
 import java.net.URL
 import java.net.URLEncoder
 import java.nio.file.Files
-import java.util.*
 
 class TalkManager : ListenerAdapter() {
 
     private val worker = DefaultAudioPlayerManager().also { AudioSourceManagers.registerLocalSource(it) }
     private val binds = mutableMapOf<String, Set<String>>().withDefault { setOf() }
     private val schedulers = mutableMapOf<String, TrackScheduler>()
-    private val dataDir = Files.createTempDirectory("yomi").toFile()
 
     fun bind(vc: VoiceChannel, read: TextChannel) {
         binds[vc.id] = binds.getValue(vc.id).toMutableSet().apply { add(read.id) }
@@ -53,20 +51,29 @@ class TalkManager : ListenerAdapter() {
     }
 
     private fun String.downloadMp3(): File {
-        val mp3 = dataDir.also { it.mkdirs() }.resolve("${UUID.randomUUID()}.mp3")
-        mp3.writeBytes(URL(this).readBytes())
+        val mp3 = Files.createTempFile("yomi", ".mp3").toFile()
+        val data = URL(this).readBytes()
+        mp3.writeBytes(data)
         return mp3
     }
 
     private fun File.toOpusWithFFmpeg(): File {
-        val opus = dataDir.also { it.mkdirs() }.resolve("${UUID.randomUUID()}.opus")
-        val log = Files.createTempFile("ffmpeg", ".log").toFile()
-        val exitCode = ProcessBuilder(listOf("ffmpeg", "-y", "-i", "$this", "-acodec", "libopus", "$opus"))
-            .redirectOutput(log)
-            .redirectError(log)
-            .start()
-            .waitFor()
-        check(exitCode == 0) { log.readText() }
+        val opus = parentFile.resolve("$nameWithoutExtension.opus")
+        val command = listOf(
+            "ffmpeg",
+            "-i", "$this",
+            "-y",
+            "-ar", "48000",
+            "-ac", "2",
+            "-acodec", "libopus",
+            "-ab", "96k",
+            "$opus"
+        )
+        val process = ProcessBuilder(command).start().also { it.waitFor() }
+        check(process.exitValue() == 0) {
+            process.errorStream.bufferedReader().forEachLine { System.err.println(it) }
+            command
+        }
         delete()
         return opus
     }
@@ -79,12 +86,7 @@ class TalkManager : ListenerAdapter() {
             val vc = event.jda.getVoiceChannelById(vcId) ?: return
             val text = event.message.contentDisplay
             println("${event.guild}, ${event.channel}, ${event.author}: $text")
-            val url = text.toYukkuriVoiceURL()
-            println("\t$url")
-            val mp3 = url.downloadMp3()
-            println("\t-> $mp3")
-            val opus = mp3.toOpusWithFFmpeg()
-            println("\t-> $opus")
+            val opus = text.toYukkuriVoiceURL().downloadMp3().toOpusWithFFmpeg()
             queue(vc, opus.path)
         }
     }
