@@ -34,6 +34,10 @@ tasks {
         }
     }
 
+    shadowJar {
+        archiveVersion.set("")
+    }
+
     task("stage") {
         dependsOn("clean", "shadowJar")
     }
