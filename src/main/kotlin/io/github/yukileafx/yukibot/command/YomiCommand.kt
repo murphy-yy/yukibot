@@ -16,8 +16,8 @@ class YomiCommand(private val manager: TalkManager) : Command() {
         val vc = event.member.voiceState?.channel
         if (vc != null) {
             val read = event.textChannel
-            manager.bind(vc, read)
-            manager.setup(vc)
+            manager.remember(vc, read)
+            manager.connect(vc)
             event.channel.popup(Color.CYAN, "${vc.name} にて ${read.asMention} の読み上げを開始しました。 :sound:")
         } else {
             event.channel.popup(Color.RED, "まずボイスチャンネルに接続してください。")

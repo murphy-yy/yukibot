@@ -5,6 +5,7 @@ import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason
+import io.github.yukileafx.yukibot.emoji
 
 class TrackScheduler(private val audioPlayer: AudioPlayer) : AudioEventAdapter() {
 
@@ -19,7 +20,7 @@ class TrackScheduler(private val audioPlayer: AudioPlayer) : AudioEventAdapter()
     }
 
     override fun onTrackStart(player: AudioPlayer, track: AudioTrack) {
-        println("再生中: ${track.info.uri}")
+        println("${":arrow_forward:".emoji()} 再生中: ${track.info.uri}")
     }
 
     override fun onTrackEnd(player: AudioPlayer, track: AudioTrack, endReason: AudioTrackEndReason) {

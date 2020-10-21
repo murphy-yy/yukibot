@@ -2,6 +2,7 @@ package io.github.yukileafx.yukibot.talk
 
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers
+import io.github.yukileafx.yukibot.emoji
 import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.entities.VoiceChannel
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent
@@ -17,12 +18,17 @@ class TalkManager : ListenerAdapter() {
     private val binds = mutableMapOf<String, Set<String>>().withDefault { setOf() }
     private val schedulers = mutableMapOf<String, TrackScheduler>()
 
-    fun bind(vc: VoiceChannel, read: TextChannel) {
+    fun remember(vc: VoiceChannel, read: TextChannel) {
         binds[vc.id] = binds.getValue(vc.id).toMutableSet().apply { add(read.id) }
         println(binds)
     }
 
-    fun setup(vc: VoiceChannel) {
+    fun forgetAll(vc: VoiceChannel) {
+        binds.remove(vc.id)
+        println(binds)
+    }
+
+    fun connect(vc: VoiceChannel) {
         schedulers.getOrPut(vc.guild.id) {
             val audioPlayer = worker.createPlayer()
             vc.guild.audioManager.sendingHandler = AudioPlayerSendHandler(audioPlayer)
@@ -32,12 +38,10 @@ class TalkManager : ListenerAdapter() {
         vc.guild.audioManager.openAudioConnection(vc)
     }
 
-    fun remove(vc: VoiceChannel) {
+    fun disconnect(vc: VoiceChannel) {
         vc.guild.audioManager.closeAudioConnection()
         schedulers.remove(vc.guild.id)
         println(schedulers)
-        binds.remove(vc.id)
-        println(binds)
     }
 
     private fun queue(vc: VoiceChannel, localPath: String) {
@@ -71,7 +75,7 @@ class TalkManager : ListenerAdapter() {
         )
         val process = ProcessBuilder(command).start().also { it.waitFor() }
         check(process.exitValue() == 0) {
-            process.errorStream.bufferedReader().forEachLine { System.err.println(it) }
+            System.err.println(process.errorStream.reader().readText())
             command
         }
         delete()
@@ -82,12 +86,14 @@ class TalkManager : ListenerAdapter() {
         if (event.author.isBot) {
             return
         }
-        binds.filterValues { it.contains(event.channel.id) }.map { it.key }.forEach { vcId ->
-            val vc = event.jda.getVoiceChannelById(vcId) ?: return
-            val text = event.message.contentDisplay
-            println("${event.guild}, ${event.channel}, ${event.author}: $text")
-            val opus = text.toYukkuriVoiceURL().downloadMp3().toOpusWithFFmpeg()
-            queue(vc, opus.path)
-        }
+        val vcList = binds
+            .filterValues { it.contains(event.channel.id) }
+            .keys
+            .mapNotNull { event.jda.getVoiceChannelById(it) }
+            .ifEmpty { return }
+        println("${event.message}")
+        val opus = event.message.contentDisplay.toYukkuriVoiceURL().downloadMp3().toOpusWithFFmpeg()
+        println("${":clock1:".emoji()} リクエスト中: $opus (${event.message.id}) -> $vcList")
+        vcList.forEach { vc -> queue(vc, "$opus") }
     }
 }
