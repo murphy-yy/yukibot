@@ -14,7 +14,7 @@ fun main() {
     val token = System.getenv("TOKEN")
 
     val jda = JDABuilder.createDefault(token)
-        .setActivity(Activity.playing("v4.0 | Kotlin アップデート！"))
+        .setActivity(Activity.playing("v4.1 | 読み上げの音質UP！"))
         .build()
     jda.awaitReady()
     println("${jda.selfUser} でログイン完了！")
