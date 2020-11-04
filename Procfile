@@ -1,1 +1,1 @@
-worker: java -jar build/libs/YukiBot-all.jar
+worker: python main.py
