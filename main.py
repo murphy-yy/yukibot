@@ -38,6 +38,19 @@ class Worker(commands.Cog):
             await ctx.send(f'このボットのオーナー {self.owner.mention} にお願いしてください。 :weary:')
 
     @commands.command()
+    async def im(self, ctx, nick=None):
+        if ctx.guild is None:
+            return
+
+        bot_member = ctx.guild.get_member(self.bot.user.id)
+        await bot_member.edit(nick=nick)
+
+        if nick is None:
+            await ctx.send(f'ボットの名前がリセットされました。 :cold_sweat:')
+        else:
+            await ctx.send(f'私は「{bot_member.nick}」になりました。')
+
+    @commands.command()
     async def p5(self, ctx, src, start_time):
         full = Path(NamedTemporaryFile(suffix='.mp4').name)
         edited = Path(NamedTemporaryFile(suffix='.mp4').name)
