@@ -1,3 +1,4 @@
+import os
 import subprocess
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -61,6 +62,7 @@ class Worker(commands.Cog):
         await ctx.send(file=upload)
 
 
+token = os.environ['TOKEN']
 bot = commands.Bot('/', help_command=None)
 bot.add_cog(Worker(bot))
-bot.run('NzM2NjYzNzk3OTM4MjU3OTkx.XxyFnw.F3UmkCthabFJJOhgmVe_7WcXgjA')
+bot.run(token)
