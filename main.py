@@ -9,6 +9,12 @@ from discord.ext import commands
 from tenacity import retry, stop_after_attempt
 
 
+async def guild_only(ctx):
+    if ctx.guild is None:
+        raise commands.CheckFailure('DMでこのコマンドは許可されていません。')
+    return True
+
+
 class YukiBotHelp(commands.DefaultHelpCommand):
 
     def __init__(self):
@@ -47,10 +53,8 @@ class YukiBot(commands.Cog):
             await ctx.send(f'このボットのオーナー {self.owner.mention} にお願いしてください。 :weary:')
 
     @commands.command(usage='[ニックネーム]', help='サーバー内でのボットの名前を変更します。')
+    @commands.check(guild_only)
     async def im(self, ctx, nick=None):
-        if ctx.guild is None:
-            raise ValueError('DMで許可されていないコマンドです。')
-
         bot_member = ctx.guild.get_member(self.bot.user.id)
         await bot_member.edit(nick=nick)
 
@@ -60,10 +64,8 @@ class YukiBot(commands.Cog):
             await ctx.send(f'私は「{bot_member.nick}」になりました。')
 
     @commands.command(usage='[カラーコード]', help='サーバー内での名前の色を変更します。 例: /color #ff0000')
+    @commands.check(guild_only)
     async def color(self, ctx, value: Color = None):
-        if ctx.guild is None:
-            raise ValueError('DMで許可されていないコマンドです。')
-
         async def clear():
             for r in ctx.author.roles:
                 if r.name == self.color_role_name:
