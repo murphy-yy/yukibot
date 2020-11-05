@@ -9,11 +9,22 @@ from discord.ext import commands
 from tenacity import retry, stop_after_attempt
 
 
-class Worker(commands.Cog):
+class YukiBotHelp(commands.DefaultHelpCommand):
+
+    def __init__(self):
+        super().__init__()
+        self.no_category = 'カテゴリ未分類'
+        self.command_attrs['help'] = 'このヘルプを表示します。'
+
+    def get_ending_note(self):
+        return (f'コマンドの詳細は {self.clean_prefix}{self.invoked_with} コマンド名 と入力してください。\n'
+                f'カテゴリの詳細も {self.clean_prefix}{self.invoked_with} カテゴリ名 と入力することができます。')
+
+
+class YukiBot(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        self.help_msg = Path('help.txt').read_text()
         self.color_role_name = 'すごい染料'
 
     @commands.Cog.listener()
@@ -27,11 +38,7 @@ class Worker(commands.Cog):
         self.owner = app_info.owner
         print(f'オーナーは {self.owner} です！')
 
-    @commands.command()
-    async def help(self, ctx):
-        await ctx.send(self.help_msg)
-
-    @commands.command()
+    @commands.command(help='このボットを終了します。 (管理者のみ)')
     async def stop(self, ctx):
         if ctx.author.id == self.owner.id:
             await ctx.send('ボットを停止しています。 :scream:')
@@ -39,10 +46,10 @@ class Worker(commands.Cog):
         else:
             await ctx.send(f'このボットのオーナー {self.owner.mention} にお願いしてください。 :weary:')
 
-    @commands.command()
+    @commands.command(usage='[ニックネーム]', help='サーバー内でのボットの名前を変更します。')
     async def im(self, ctx, nick=None):
         if ctx.guild is None:
-            return
+            raise ValueError('DMで許可されていないコマンドです。')
 
         bot_member = ctx.guild.get_member(self.bot.user.id)
         await bot_member.edit(nick=nick)
@@ -52,10 +59,10 @@ class Worker(commands.Cog):
         else:
             await ctx.send(f'私は「{bot_member.nick}」になりました。')
 
-    @commands.command()
+    @commands.command(usage='[カラーコード]', help='サーバー内での名前の色を変更します。 例: /color #ff0000')
     async def color(self, ctx, value: Color = None):
         if ctx.guild is None:
-            return
+            raise ValueError('DMで許可されていないコマンドです。')
 
         async def clear():
             for r in ctx.author.roles:
@@ -68,12 +75,13 @@ class Worker(commands.Cog):
         else:
             color32 = int(value.get_hex_l().replace('#', '', 1), 16)
             color = discord.Colour(color32)
+
             await clear()
             role = await ctx.guild.create_role(name=self.color_role_name, colour=color)
             await ctx.author.add_roles(role)
             await ctx.send(f'名前の色を {value.get_hex_l()} ({color32}) に変更しました。 :paintbrush:')
 
-    @commands.command()
+    @commands.command(usage='<動画ソース> <秒数>', help='5秒間の動画切り抜きを作成します。 例: /p5 JGwWNGJdvx8 3:30')
     async def p5(self, ctx, src, start_time):
         full = Path(NamedTemporaryFile(suffix='.mp4').name)
         edited = Path(NamedTemporaryFile(suffix='.mp4').name)
@@ -99,6 +107,6 @@ class Worker(commands.Cog):
 
 
 token = os.environ['TOKEN']
-bot = commands.Bot('/', help_command=None)
-bot.add_cog(Worker(bot))
+bot = commands.Bot('/', help_command=YukiBotHelp())
+bot.add_cog(YukiBot(bot))
 bot.run(token)
