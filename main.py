@@ -40,7 +40,7 @@ class YukiBotTTS(commands.Cog):
         self.data.setdefault(vc.id, {'channels': set([]), 'queue': Queue()})
         self.data[vc.id]['channels'].add(channel.id)
 
-    def forgetAll(self, vc):
+    def forget_all(self, vc):
         self.data.pop(vc.id, None)
 
     async def connect(self, vc):
@@ -123,7 +123,7 @@ class YukiBotTTS(commands.Cog):
             await ctx.send('まずボイスチャンネルに接続してください。')
         else:
             await self.disconnect(vc)
-            self.forgetAll(vc)
+            self.forget_all(vc)
             await ctx.send(f'{vc.name} の読み上げを終了しました。 :pleading_face:')
 
 
