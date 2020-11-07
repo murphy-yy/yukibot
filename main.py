@@ -2,12 +2,11 @@ import os
 import subprocess
 import tempfile
 import urllib
+import xml.etree.ElementTree
 from pathlib import Path
 from queue import Queue
-from xml.etree import ElementTree
 
 import discord
-import urllib3
 from colour import Color
 from discord.ext import commands
 from tenacity import retry, stop_after_attempt
@@ -36,16 +35,14 @@ class YukiBotTTS(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.data = {}
-        self.emoji_t9n = {}
+        self.emoji_t9n = self.emoji_translation()
 
-        http = urllib3.PoolManager()
-        r = http.request(
-            'GET', 'https://raw.githubusercontent.com/unicode-org/cldr/master/common/annotations/ja.xml')
-        data = r.data.decode('utf-8')
-        xml = ElementTree.fromstring(data)
-        for a in xml.find('annotations').iter('annotation'):
-            if a.attrib.get('type') == 'tts':
-                self.emoji_t9n[a.attrib['cp']] = a.text
+    def emoji_translation(self):
+        url = 'https://raw.githubusercontent.com/unicode-org/cldr/master/common/annotations/ja.xml'
+        data = urllib.request.urlopen(url).read().decode()
+        root = xml.etree.ElementTree.fromstring(data)
+        tags = root.find('annotations').iter('annotation')
+        return {x.attrib['cp']: x.text for x in tags if x.attrib.get('type') == 'tts'}
 
     def remember(self, vc, channel):
         self.data.setdefault(vc.id, {'channels': set([]), 'queue': Queue()})
