@@ -73,7 +73,7 @@ class YukiBotTTS(commands.Cog):
             client = vc.guild.voice_client
             client.play(audio, after=lambda l: self.play(vc))
 
-    def request(self, vc, text):
+    async def request(self, vc, text):
         lines = text.splitlines()
         for line in lines:
             effect = 'echo' if len(line) > 40 else 'none'
@@ -90,7 +90,7 @@ class YukiBotTTS(commands.Cog):
             mp3 = Path(NamedTemporaryFile(suffix='.mp3').name)
             urlretrieve(url, mp3)
 
-            audio = discord.FFmpegPCMAudio(mp3)
+            audio = await discord.FFmpegOpusAudio.from_probe(mp3)
             self.play(vc, audio)
 
     @commands.Cog.listener()
@@ -100,7 +100,7 @@ class YukiBotTTS(commands.Cog):
 
         vc = self.get_vc(message.channel)
         if vc is not None:
-            self.request(vc, message.content)
+            await self.request(vc, message.content)
 
     @commands.command(help='チャットの読み上げを開始します。')
     @commands.check(guild_only)
