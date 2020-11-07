@@ -4,8 +4,10 @@ import tempfile
 import urllib
 from pathlib import Path
 from queue import Queue
+from xml.etree import ElementTree
 
 import discord
+import urllib3
 from colour import Color
 from discord.ext import commands
 from tenacity import retry, stop_after_attempt
@@ -34,6 +36,16 @@ class YukiBotTTS(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.data = {}
+        self.emoji_t9n = {}
+
+        http = urllib3.PoolManager()
+        r = http.request(
+            'GET', 'https://raw.githubusercontent.com/unicode-org/cldr/master/common/annotations/ja.xml')
+        data = r.data.decode('utf-8')
+        xml = ElementTree.fromstring(data)
+        for a in xml.find('annotations').iter('annotation'):
+            if a.attrib.get('type') == 'tts':
+                self.emoji_t9n[a.attrib['cp']] = a.text
 
     def remember(self, vc, channel):
         self.data.setdefault(vc.id, {'channels': set([]), 'queue': Queue()})
@@ -53,8 +65,8 @@ class YukiBotTTS(commands.Cog):
             await client.disconnect()
 
     def get_vc(self, channel):
-        for vc_id in self.data.keys():
-            if channel.id in self.data[vc_id]['channels']:
+        for vc_id, value in self.data.items():
+            if channel.id in value['channels']:
                 return self.bot.get_channel(vc_id)
 
     def play(self, vc, audio=None):
@@ -74,6 +86,14 @@ class YukiBotTTS(commands.Cog):
 
     async def request(self, vc, text):
         for line in text.splitlines():
+            if len(line.strip()) == 0:
+                continue
+
+            print(line)
+            for emoji, t9n in self.emoji_t9n.items():
+                line = line.replace(emoji, t9n)
+            print(line)
+
             params = {}
 
             if len(line) > 20:
@@ -89,7 +109,12 @@ class YukiBotTTS(commands.Cog):
             qs = urllib.parse.urlencode(params)
             url = f'https://www.yukumo.net/api/v2/aqtk1/koe.mp3?{qs}'
             mp3 = Path(tempfile.NamedTemporaryFile(suffix='.mp3').name)
-            urllib.request.urlretrieve(url, mp3)
+
+            try:
+                urllib.request.urlretrieve(url, mp3)
+            except urllib.error.HTTPError as e:
+                print(e)
+                continue
 
             audio = await discord.FFmpegOpusAudio.from_probe(mp3)
             self.play(vc, audio)
