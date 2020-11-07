@@ -1,10 +1,9 @@
 import os
 import subprocess
+import tempfile
+import urllib
 from pathlib import Path
 from queue import Queue
-from tempfile import NamedTemporaryFile
-from urllib.parse import quote
-from urllib.request import urlretrieve
 
 import discord
 from colour import Color
@@ -74,21 +73,23 @@ class YukiBotTTS(commands.Cog):
             client.play(audio, after=lambda l: self.play(vc))
 
     async def request(self, vc, text):
-        lines = text.splitlines()
-        for line in lines:
-            effect = 'echo' if len(line) > 40 else 'none'
-            boyomi = 'true' if len(line) > 40 else 'false'
-            speed = 100 + (len(line) - 20) if len(line) > 20 else 100
-            kanji = quote(line)
+        for line in text.splitlines():
+            params = {}
 
-            url = ('https://www.yukumo.net/api/v2/aqtk1/koe.mp3'
-                   '?type=f1'
-                   f'&effect={effect}'
-                   f'&boyomi={boyomi}'
-                   f'&speed={speed}'
-                   f'&kanji={kanji}')
-            mp3 = Path(NamedTemporaryFile(suffix='.mp3').name)
-            urlretrieve(url, mp3)
+            if len(line) > 20:
+                params['speed'] = 100 + (len(line) - 20)
+
+            if len(line) > 40:
+                params['effect'] = 'echo'
+                params['boyomi'] = 'true'
+
+            params['type'] = 'f1'
+            params['kanji'] = line
+
+            qs = urllib.parse.urlencode(params)
+            url = f'https://www.yukumo.net/api/v2/aqtk1/koe.mp3?{qs}'
+            mp3 = Path(tempfile.NamedTemporaryFile(suffix='.mp3').name)
+            urllib.request.urlretrieve(url, mp3)
 
             audio = await discord.FFmpegOpusAudio.from_probe(mp3)
             self.play(vc, audio)
@@ -185,8 +186,8 @@ class YukiBot(commands.Cog):
 
     @commands.command(usage='<動画ソース> <秒数>', help='5秒間の動画切り抜きを作成します。 例: /p5 JGwWNGJdvx8 3:30')
     async def p5(self, ctx, src, start_time):
-        full = Path(NamedTemporaryFile(suffix='.mp4').name)
-        edited = Path(NamedTemporaryFile(suffix='.mp4').name)
+        full = Path(tempfile.NamedTemporaryFile(suffix='.mp4').name)
+        edited = Path(tempfile.NamedTemporaryFile(suffix='.mp4').name)
 
         x1 = f'youtube-dl -f best -o {full} -- {src}'
         x2 = f'ffmpeg -ss {start_time} -i {full} -t 0:05 {edited}'
