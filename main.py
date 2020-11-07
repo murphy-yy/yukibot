@@ -1,6 +1,7 @@
 import os
 import subprocess
 import tempfile
+import traceback
 import urllib
 import xml.etree.ElementTree
 from pathlib import Path
@@ -42,7 +43,7 @@ class YukiBotTTS(commands.Cog):
         data = urllib.request.urlopen(url).read().decode()
         root = xml.etree.ElementTree.fromstring(data)
         tags = root.find('annotations').iter('annotation')
-        return {x.attrib['cp']: x.text for x in tags if x.attrib.get('type') == 'tts'}
+        return {x.attrib['cp']: x.text for x in tags if x.attrib.get('type') == 'tts' and not x.attrib['cp'] in ['、', '。']}
 
     def remember(self, vc, channel):
         self.data.setdefault(vc.id, {'channels': set([]), 'queue': Queue()})
@@ -86,10 +87,8 @@ class YukiBotTTS(commands.Cog):
             if len(line.strip()) == 0:
                 continue
 
-            print(line)
             for emoji, t9n in self.emoji_t9n.items():
                 line = line.replace(emoji, t9n)
-            print(line)
 
             params = {}
 
@@ -109,8 +108,8 @@ class YukiBotTTS(commands.Cog):
 
             try:
                 urllib.request.urlretrieve(url, mp3)
-            except urllib.error.HTTPError as e:
-                print(e)
+            except urllib.error.HTTPError:
+                print(traceback.format_exc())
                 continue
 
             audio = await discord.FFmpegOpusAudio.from_probe(mp3)
