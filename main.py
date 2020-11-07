@@ -1,6 +1,7 @@
 import os
 import subprocess
 from pathlib import Path
+from queue import Queue
 from tempfile import NamedTemporaryFile
 from urllib.parse import quote
 from urllib.request import urlretrieve
@@ -33,17 +34,14 @@ class YukiBotTTS(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        self.bind_map = {}
-        self.queue = {}
+        self.data = {}
 
     def remember(self, vc, channel):
-        self.bind_map.setdefault(vc.id, set([]))
-        self.bind_map[vc.id].add(channel.id)
-        print(self.bind_map)
+        self.data.setdefault(vc.id, {'channels': set([]), 'queue': Queue()})
+        self.data[vc.id]['channels'].add(channel.id)
 
     def forgetAll(self, vc):
-        self.bind_map.pop(vc.id, None)
-        print(self.bind_map)
+        self.data.pop(vc.id, None)
 
     async def connect(self, vc):
         client = vc.guild.voice_client
@@ -56,24 +54,22 @@ class YukiBotTTS(commands.Cog):
             await client.disconnect()
 
     def get_vc(self, channel):
-        for vc_id in self.bind_map.keys():
-            if channel.id in self.bind_map[vc_id]:
+        for vc_id in self.data.keys():
+            if channel.id in self.data[vc_id]['channels']:
                 return self.bot.get_channel(vc_id)
 
     def play(self, vc, audio=None):
+        q = self.data[vc.id]['queue']
         client = vc.guild.voice_client
 
         if audio is not None:
-            self.queue.setdefault(vc.id, [])
-            self.queue[vc.id].append(audio)
-
-        print(self.queue)
+            q.put(audio)
 
         if not client.is_connected() or client.is_playing():
             return
 
-        if len(self.queue[vc.id]) > 0:
-            audio = self.queue[vc.id].pop(0)
+        if not q.empty():
+            audio = q.get()
             client = vc.guild.voice_client
             client.play(audio, after=lambda l: self.play(vc))
 
