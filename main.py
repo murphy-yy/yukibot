@@ -29,7 +29,7 @@ class YukiBotHelp(commands.DefaultHelpCommand):
                 f'カテゴリの詳細も {self.clean_prefix}{self.invoked_with} カテゴリ名 と入力することができます。')
 
 
-class YukiBotTTS():
+class YukiBotTTS(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
@@ -97,13 +97,45 @@ class YukiBotTTS():
             audio = discord.FFmpegPCMAudio(mp3)
             self.play(vc, audio)
 
+    @commands.Cog.listener()
+    async def on_message(self, message):
+        if message.author.bot:
+            return
+
+        vc = self.get_vc(message.channel)
+        if vc is not None:
+            self.request(vc, message.content)
+
+    @commands.command(help='チャットの読み上げを開始します。')
+    @commands.check(guild_only)
+    async def yomi(self, ctx):
+        vc = ctx.author.voice.channel if ctx.author.voice else None
+
+        if vc is None:
+            await ctx.send('まずボイスチャンネルに接続してください。')
+        else:
+            self.remember(vc, ctx.channel)
+            await self.connect(vc)
+            await ctx.send(f'{vc.name} にて {ctx.channel.mention} の読み上げを開始しました。 :sound:')
+
+    @commands.command(help='チャットの読み上げを終了します。')
+    @commands.check(guild_only)
+    async def noyomi(self, ctx):
+        vc = ctx.author.voice.channel if ctx.author.voice else None
+
+        if vc is None:
+            await ctx.send('まずボイスチャンネルに接続してください。')
+        else:
+            await self.disconnect(vc)
+            self.forgetAll(vc)
+            await ctx.send(f'{vc.name} の読み上げを終了しました。 :pleading_face:')
+
 
 class YukiBot(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
         self.color_role_name = 'すごい染料'
-        self.tts = YukiBotTTS(self.bot)
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -115,15 +147,6 @@ class YukiBot(commands.Cog):
         app_info = await self.bot.application_info()
         self.owner = app_info.owner
         print(f'オーナーは {self.owner} です！')
-
-    @commands.Cog.listener()
-    async def on_message(self, message):
-        if message.author.bot:
-            return
-
-        vc = self.tts.get_vc(message.channel)
-        if vc is not None:
-            self.tts.request(vc, message.content)
 
     @commands.command(help='このボットを終了します。 (管理者のみ)')
     async def stop(self, ctx):
@@ -164,30 +187,6 @@ class YukiBot(commands.Cog):
             await ctx.author.add_roles(role)
             await ctx.send(f'名前の色を {value.get_hex_l()} ({color32}) に変更しました。 :paintbrush:')
 
-    @commands.command(help='チャットの読み上げを開始します。')
-    @commands.check(guild_only)
-    async def yomi(self, ctx):
-        vc = ctx.author.voice.channel if ctx.author.voice else None
-
-        if vc is None:
-            await ctx.send('まずボイスチャンネルに接続してください。')
-        else:
-            self.tts.remember(vc, ctx.channel)
-            await self.tts.connect(vc)
-            await ctx.send(f'{vc.name} にて {ctx.channel.mention} の読み上げを開始しました。 :sound:')
-
-    @commands.command(help='チャットの読み上げを終了します。')
-    @commands.check(guild_only)
-    async def noyomi(self, ctx):
-        vc = ctx.author.voice.channel if ctx.author.voice else None
-
-        if vc is None:
-            await ctx.send('まずボイスチャンネルに接続してください。')
-        else:
-            await self.tts.disconnect(vc)
-            self.tts.forgetAll(vc)
-            await ctx.send(f'{vc.name} の読み上げを終了しました。 :pleading_face:')
-
     @commands.command(usage='<動画ソース> <秒数>', help='5秒間の動画切り抜きを作成します。 例: /p5 JGwWNGJdvx8 3:30')
     async def p5(self, ctx, src, start_time):
         full = Path(NamedTemporaryFile(suffix='.mp4').name)
@@ -216,4 +215,5 @@ class YukiBot(commands.Cog):
 token = os.environ['TOKEN']
 bot = commands.Bot('/', help_command=YukiBotHelp())
 bot.add_cog(YukiBot(bot))
+bot.add_cog(YukiBotTTS(bot))
 bot.run(token)
