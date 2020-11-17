@@ -43,8 +43,8 @@ class YukiBot(commands.Cog):
     @commands.command(usage='[カラーコード]', help='サーバー内での名前の色を変更します。 例: /color #ff0000')
     @commands.check(commands_better.guild_only)
     async def color(self, ctx, color_object: str = None):
-        color_roles = [r for r in ctx.author.roles if r.name ==
-                       self.color_role_name]
+        color_roles = [r for r in ctx.author.roles
+                       if r.name == self.color_role_name]
 
         if color_object is None:
             for r in color_roles:
