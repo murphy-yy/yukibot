@@ -11,8 +11,8 @@ class YouTube(commands.Cog):
     @commands.command(usage='<動画ソース> [再生を開始する秒数] [再生する秒数]', help='動画を再生します。 例: /playback "youtu.be/TQ8WlA2GXbk" 1:33 0:12', aliases=['play', 'p', 'p5'])
     async def playback(self, ctx, video_src, start_time: str = '0:00', duration_time: str = '0:30'):
         sel_entry = ['bestvideo[height<=360][ext=webm]+bestaudio[ext=webm]',
-                     'bestvideo[height<=360]+bestaudio',
                      'best[ext=webm][height<=360]',
+                     'bestvideo[height<=360]+bestaudio',
                      'best[height<=360]',
                      'best']
 
@@ -21,12 +21,12 @@ class YouTube(commands.Cog):
                 '--get-filename',
                 video_src]
 
-        x = await ctx.send(f'ファイル名を検証しています...\n{cmd1}')
+        x = await ctx.send('ファイル名を検証しています...')
         filename = subprocess.check_output(cmd1).decode().rstrip()
 
         p = pathlib.Path(filename)
         tmp1 = pathlib.Path(tempfile.NamedTemporaryFile(suffix=p.suffix).name)
-        tmp2 = tmp1.parent / f'{tmp1.stem}-cropped{p.suffix}'
+        tmp2 = pathlib.Path(tempfile.NamedTemporaryFile(suffix=p.suffix).name)
 
         cmd2 = ['youtube-dl',
                 '-f', '/'.join(sel_entry),
@@ -40,13 +40,17 @@ class YouTube(commands.Cog):
                 '-c', 'copy',
                 tmp2]
 
-        await x.edit(content=f'ダウンロードを実行しています...\n{cmd2}')
-        subprocess.check_call(cmd2)
+        try:
+            await x.edit(content='ダウンロードを実行しています...')
+            subprocess.check_call(cmd2)
 
-        await x.edit(content=f'変換しています...\n{cmd3}')
-        subprocess.check_call(cmd3)
+            await x.edit(content='変換しています...')
+            subprocess.check_call(cmd3)
 
-        await x.delete()
+            await x.delete()
 
-        upload = discord.File(tmp2)
-        await ctx.send(file=upload)
+            upload = discord.File(tmp2)
+            await ctx.send(file=upload)
+        finally:
+            tmp1.unlink()
+            tmp2.unlink()
