@@ -10,11 +10,10 @@ class YouTube(commands.Cog):
 
     @commands.command(usage='<動画ソース> [再生を開始する秒数] [再生する秒数]', help='動画を再生します。 例: /playback "youtu.be/TQ8WlA2GXbk" 1:33 0:12', aliases=['play', 'p', 'p5'])
     async def playback(self, ctx, video_src, start_time: str = '0:00', duration_time: str = '0:30'):
-        sel_entry = ['bestvideo[height<=360][ext=webm]+bestaudio[ext=webm]',
-                     'best[ext=webm][height<=360]',
-                     'bestvideo[height<=360]+bestaudio',
-                     'best[height<=360]',
-                     'best']
+        sel_entry = ['bestvideo[ext=webm][height<=720]+bestaudio[ext=webm]',
+                     'best[ext=webm][height<=720]',
+                     'bestvideo[height<=480]+bestaudio',
+                     'best[height<=480]']
 
         cmd1 = ['youtube-dl',
                 '-f', '/'.join(sel_entry),
