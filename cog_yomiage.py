@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 from queue import Queue
 
 import discord
-from discord.ext import commands, tasks
+from discord.ext import commands
 
 import commands_better
 
