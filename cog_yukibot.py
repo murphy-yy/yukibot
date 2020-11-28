@@ -9,7 +9,7 @@ class YukiBot(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        self.playing = 'v5 | 動画切り抜きコマンドの追加'
+        self.playing = 'v6 | キタコレ'
         self.color_role_name = 'すごい染料'
 
     @commands.Cog.listener()
