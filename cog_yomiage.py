@@ -44,8 +44,9 @@ class Yomiage(commands.Cog):
         if message.channel.id not in (self.channels.get(message.guild.id) or []):
             return
 
-        text = message.content
+        print(message)
 
+        text = message.content
         for emoji, tts_text in self.emojis.items():
             text = text.replace(emoji, tts_text)
 
