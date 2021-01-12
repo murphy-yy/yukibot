@@ -1,19 +1,110 @@
+import base64
 import os
+import tempfile
 
-from discord.ext import commands
+import colour
+import discord
+from discord_slash import SlashCommand, SlashCommandOptionType
+from discord_slash.utils import manage_commands
+from mcstatus import MinecraftServer
 
-import cog_thiscoin
-import cog_yomiage
-import cog_youtube
-import cog_yukibot
-import commands_better
+client = discord.Client(intents=discord.Intents.all())
+slash = SlashCommand(client, auto_register=True, auto_delete=True)
 
-if __name__ == '__main__':
-    token = os.environ['TOKEN']
+guild_ids = [784133834802200656, 357134045328572418, 695918397002874880]
 
-    bot = commands.Bot('/', help_command=commands_better.Help())
-    bot.add_cog(cog_yukibot.YukiBot(bot))
-    bot.add_cog(cog_youtube.YouTube())
-    bot.add_cog(cog_thiscoin.ThisCoin())
-    bot.add_cog(cog_yomiage.Yomiage(bot))
-    bot.run(token)
+
+@client.event
+async def on_ready():
+    print(f"{client.user} でログイン完了")
+
+
+@slash.slash(name="stop", guild_ids=guild_ids, description="ボットを終了します。")
+async def _stop(ctx):
+    await ctx.send(content=":scream: ボットを終了しています。")
+    await client.logout()
+
+
+def clean_description(o):
+    if isinstance(o, dict):
+        if "extra" in o.keys():
+            return "".join(map(lambda x: x["text"], o["extra"]))
+        else:
+            return o["text"]
+    else:
+        return o
+
+
+def extract_information(sample):
+    return "\n".join(map(lambda p: p.name, sample or []))
+
+
+@slash.slash(
+    name="mcping",
+    guild_ids=guild_ids,
+    description="マイクラサーバーの接続をチェックします。",
+    options=[
+        manage_commands.create_option(
+            "address", "サーバーのアドレス", SlashCommandOptionType.STRING, True
+        )
+    ],
+)
+async def _mcping(ctx, address):
+    server = MinecraftServer.lookup(address)
+    status = server.status()
+
+    with tempfile.NamedTemporaryFile(suffix=".png") as fp:
+        data = base64.b64decode(status.favicon[21:])
+        fp.write(data)
+
+        fav = await ctx.channel.send(file=discord.File(fp.name))
+
+    embed = discord.Embed(title=f":white_check_mark: {address} の接続情報")
+    embed.set_thumbnail(url=fav.attachments[0].url)
+    embed.add_field(
+        name="プレイヤー", value=f"{status.players.online} / {status.players.max}"
+    )
+    embed.add_field(name="バージョン", value=status.version.name or "なし")
+    embed.add_field(
+        name="説明", value=clean_description(status.description) or "なし", inline=False
+    )
+    embed.add_field(
+        name="細かい説明", value=extract_information(status.players.sample) or "なし"
+    )
+    embed.set_footer(text=f"{status.latency} ms で処理が完了しました。")
+    await ctx.send(content="", embeds=[embed])
+
+
+@slash.slash(
+    name="color",
+    guild_ids=guild_ids,
+    description="自分の名前の色を変更します。",
+    options=[
+        manage_commands.create_option(
+            "web_color",
+            "名前の色 (例: #FF0000、red)",
+            SlashCommandOptionType.STRING,
+            True,
+        )
+    ],
+)
+async def _color(ctx, web_color):
+    name = "すごい染料"
+    roles = list(filter(lambda r: r.name == name, ctx.author.roles))
+
+    index = colour.Color(web_color)
+    hex = int(index.get_hex_l()[1:], 16)
+    color = discord.Color(hex)
+
+    if roles:
+        role = roles.pop(0)
+        await role.edit(color=color)
+    else:
+        role = await ctx.guild.create_role(name=name, color=color)
+        await ctx.author.add_roles(role)
+
+    await ctx.send(content=f":paintbrush: 名前の色を {index.get_hex_l()} ({hex}) に変更しました。")
+
+
+token = os.environ["TOKEN"]
+client.run(token)
