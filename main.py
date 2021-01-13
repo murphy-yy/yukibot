@@ -12,6 +12,7 @@ client = discord.Client(intents=discord.Intents.all())
 slash = SlashCommand(client, auto_register=True, auto_delete=True)
 
 guild_ids = [784133834802200656, 357134045328572418, 695918397002874880]
+color_name = "すごい染料"
 
 
 @client.event
