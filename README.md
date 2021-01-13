@@ -5,8 +5,7 @@
 ## 🚀 起動
 
 ```bash
-export TOKEN="ボットのトークン"
-bash run.sh
+TOKEN="ボットのトークン" bash run.sh
 ```
 
 ## 🐳 Dockerで起動する
@@ -20,9 +19,5 @@ docker build -t yukibot .
 ### 🏃 実行
 
 ```bash
-docker run -d \
-  --name yukibot \
-  --restart=always \
-  -e TOKEN="ボットのトークン" \
-  yukibot
+docker run -d --restart=always --name yukibot -e TOKEN="ボットのトークン" yukibot
 ```
