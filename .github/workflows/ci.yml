@@ -28,4 +28,4 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |-
-            ghcr.io/YukiLeafX/yukibot:latest
+            ghcr.io/yukileafx/yukibot:latest
