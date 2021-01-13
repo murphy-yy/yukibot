@@ -78,7 +78,7 @@ async def _mcping(ctx, address):
 @slash.slash(
     name="color",
     guild_ids=guild_ids,
-    description="自分の名前の色を変更します。",
+    description="名前の色を変更します。",
     options=[
         manage_commands.create_option(
             "web_color",
@@ -89,21 +89,38 @@ async def _mcping(ctx, address):
     ],
 )
 async def _color(ctx, web_color):
-    name = "すごい染料"
-    roles = list(filter(lambda r: r.name == name, ctx.author.roles))
+    roles = [r for r in ctx.author.roles if r.name == color_name]
+    print(f"編集中: {roles}")
 
-    index = colour.Color(web_color)
-    hex = int(index.get_hex_l()[1:], 16)
-    color = discord.Color(hex)
+    primary = roles.pop(0) if roles else None
 
     if roles:
-        role = roles.pop(0)
-        await role.edit(color=color)
+        for role in roles:
+            await role.delete()
+
+    index = colour.Color(web_color)
+    hex = index.get_hex_l()
+    value = int(hex[1:], 16)
+    color = discord.Color(value)
+
+    if primary:
+        await primary.edit(color=color)
     else:
-        role = await ctx.guild.create_role(name=name, color=color)
+        role = await ctx.guild.create_role(name=color_name, color=color)
         await ctx.author.add_roles(role)
 
-    await ctx.send(content=f":paintbrush: 名前の色を {index.get_hex_l()} ({hex}) に変更しました。")
+    await ctx.send(content=f":paintbrush: 名前の色を {hex} ({value}) に変更しました。")
+
+
+@slash.slash(name="resetcolor", guild_ids=guild_ids, description="名前の色をリセットします。")
+async def _resetcolor(ctx):
+    roles = [r for r in ctx.author.roles if r.name == color_name]
+    print(f"削除中: {roles}")
+
+    for role in roles:
+        await role.delete()
+
+    await ctx.send(content=":sparkles: 名前の色がリセットされました。")
 
 
 token = os.environ["TOKEN"]
