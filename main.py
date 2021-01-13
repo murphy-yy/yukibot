@@ -20,6 +20,11 @@ async def on_ready():
     print(f"{client.user} でログイン完了")
 
 
+@client.event
+async def on_slash_command_error(ctx, ex):
+    await ctx.send(content=f"エラーが発生しました。\n{ex}", hidden=True)
+
+
 @slash.slash(name="stop", guild_ids=guild_ids, description="ボットを終了します。")
 async def _stop(ctx):
     await ctx.send(content=":scream: ボットを終了しています。")
