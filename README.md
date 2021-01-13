@@ -21,8 +21,8 @@ docker build -t yukibot .
 
 ```bash
 docker run -d \
-  --name yukibot
-  --restart=always
-  -e TOKEN="ボットのトークン"
+  --name yukibot \
+  --restart=always \
+  -e TOKEN="ボットのトークン" \
   yukibot
 ```
