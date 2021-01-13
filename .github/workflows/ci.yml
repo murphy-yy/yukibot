@@ -27,5 +27,5 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: |
-            ghcr.io/yukileafx/yukibot:latest
+          tags: |-
+            ghcr.io/YukiLeafX/yukibot:latest
