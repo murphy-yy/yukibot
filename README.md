@@ -4,8 +4,10 @@
 
 ## 🚀 起動
 
+ギルドIDを指定するとコマンドの反映が高速になります。
+
 ```bash
-TOKEN="ボットのトークン" bash run.sh
+TOKEN="ボットのトークン" python -u main.py [ギルドID...]
 ```
 
 ## 🐳 Dockerで起動する

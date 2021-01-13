@@ -1,6 +1,6 @@
 import base64
 import os
-import pickle
+import sys
 import tempfile
 
 import colour
@@ -12,10 +12,10 @@ from mcstatus import MinecraftServer
 client = discord.Client(intents=discord.Intents.all())
 slash = SlashCommand(client, auto_register=True, auto_delete=True)
 
-with open("guild.pickle", "rb") as fp:
-    guild_ids = pickle.load(fp)
+guild_ids = [int(id) for id in sys.argv[1:]]
 
-print(f"有効化されたサーバー: {guild_ids}")
+if guild_ids:
+    print(f"デバッグサーバー: {guild_ids}")
 
 color_name = "すごい染料"
 
