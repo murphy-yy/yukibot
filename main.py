@@ -32,7 +32,8 @@ async def on_slash_command_error(ctx, ex):
 
 @slash.slash(name="stop", guild_ids=guild_ids, description="ボットを終了します。")
 async def _stop(ctx):
-    await ctx.send(content=":scream: ボットを終了しています。")
+    await ctx.send(content=":scream: ボットを終了しています…", hidden=True)
+
     await client.logout()
 
 
@@ -61,6 +62,8 @@ def extract_information(sample):
     ],
 )
 async def _mcping(ctx, address):
+    await ctx.send(content=f":tropical_drink: {address} に接続しています…", hidden=True)
+
     server = MinecraftServer.lookup(address)
     status = server.status()
 
@@ -100,6 +103,8 @@ async def _mcping(ctx, address):
     ],
 )
 async def _color(ctx, web_color):
+    await ctx.send(content=f":triumph: 不要な染料を削除して新たに付与しています…", hidden=True)
+
     roles = [r for r in ctx.author.roles if r.name == color_name]
     print(f"編集中: {roles}")
 
@@ -125,6 +130,8 @@ async def _color(ctx, web_color):
 
 @slash.slash(name="resetcolor", guild_ids=guild_ids, description="名前の色をリセットします。")
 async def _resetcolor(ctx):
+    await ctx.send(content=f":cold_face: 全ての染料を削除しています…", hidden=True)
+
     roles = [r for r in ctx.author.roles if r.name == color_name]
     print(f"削除中: {roles}")
 
