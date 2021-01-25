@@ -1,5 +1,6 @@
 import argparse
 import base64
+import random
 import tempfile
 
 import colour
@@ -8,6 +9,7 @@ from discord_slash import SlashCommand, SlashCommandOptionType
 from discord_slash.utils import manage_commands
 
 import minecraft_status
+import proc
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--token", help="ボットのトークンを指定します", required=True)
@@ -127,6 +129,67 @@ async def _resetcolor(ctx):
     await delete_roles(roles)
 
     await ctx.send(content=":sparkles: 名前の色がリセットされました。")
+
+
+@slash.slash(
+    name="vthumbnail",
+    guild_ids=args.guild_id,
+    description="動画のサムネイルを取得します。",
+    options=[
+        manage_commands.create_option(
+            "url",
+            "動画のURL",
+            SlashCommandOptionType.STRING,
+            True,
+        )
+    ],
+)
+async def _vthumbnail(ctx, url):
+    await ctx.send(content=f":face_with_monocle: 動画のサムネイルを取得しています…", hidden=True)
+
+    thumbnail = await proc.call(["youtube-dl", "--no-playlist", "--get-thumbnail", url])
+
+    await ctx.send(content=thumbnail)
+
+
+@slash.slash(
+    name="vshot",
+    guild_ids=args.guild_id,
+    description="動画の指定された時間を一枚の画像にします。",
+    options=[
+        manage_commands.create_option(
+            "url",
+            "動画のURL",
+            SlashCommandOptionType.STRING,
+            True,
+        ),
+        manage_commands.create_option(
+            "timestamp",
+            "画像にする時間",
+            SlashCommandOptionType.STRING,
+            True,
+        ),
+    ],
+)
+async def _vshot(ctx, url, timestamp):
+    await ctx.send(content=f":frame_photo: 画像を生成しています…", hidden=True)
+
+    with tempfile.NamedTemporaryFile(suffix=".jpg") as fp:
+        await proc.call(
+            [
+                "youtube-dl",
+                "-f",
+                "bestvideo[height<=720]/best[height<=720]",
+                "--no-playlist",
+                "--exec",
+                f"ffmpeg -y -ss {timestamp} -i {{}} -vframes 1 {fp.name}; rm -f {{}}",
+                "-o",
+                f"{random.random()}.%(ext)s",
+                url,
+            ]
+        )
+
+        await ctx.channel.send(file=discord.File(fp.name))
 
 
 client.run(args.token)
