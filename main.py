@@ -294,7 +294,7 @@ async def _vget(
                         crop_duration,
                         "-async",
                         "1",
-                        src.with_name(src.name + "-cropped" + src.suffix),
+                        src.with_suffix("").name + "-cropped" + src.suffix,
                     ],
                     cwd=tmpdir,
                 )
