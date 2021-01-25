@@ -184,9 +184,9 @@ async def _vshot(ctx, url, timestamp):
         await proc.call(
             [
                 "youtube-dl",
-                "-f",
-                "bestvideo[height<=720]/best[height<=720]",
                 "--no-playlist",
+                "-f",
+                "(bestvideo/best)[height<=720]",
                 "--exec",
                 f"ffmpeg -y -ss {timestamp} -i {{}} -vframes 1 {output}; rm -f {{}}",
                 url,
