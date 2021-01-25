@@ -67,14 +67,17 @@ async def _mcping(ctx, address):
     server = MinecraftServer.lookup(address)
     status = server.status()
 
-    with tempfile.NamedTemporaryFile(suffix=".png") as fp:
-        data = base64.b64decode(status.favicon[21:])
-        fp.write(data)
+    fav_b64_offset = len("data:image/png;base64,")
+    fav_data = base64.b64decode(status.favicon[fav_b64_offset:])
 
+    with tempfile.NamedTemporaryFile(suffix=".png") as fp:
+        fp.write(fav_data)
         fav = await ctx.channel.send(file=discord.File(fp.name))
 
+    fav_url = fav.attachments[0].url
+
     embed = discord.Embed(title=f":white_check_mark: {address} の接続情報")
-    embed.set_thumbnail(url=fav.attachments[0].url)
+    embed.set_thumbnail(url=fav_url)
     embed.add_field(
         name="プレイヤー", value=f"{status.players.online} / {status.players.max}"
     )
@@ -86,7 +89,7 @@ async def _mcping(ctx, address):
         name="細かい説明", value=extract_information(status.players.sample) or "なし"
     )
     embed.set_footer(text=f"{status.latency} ms で処理が完了しました。")
-    await ctx.send(content="", embeds=[embed])
+    await ctx.send(embeds=[embed])
 
 
 @slash.slash(
