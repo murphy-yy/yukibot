@@ -12,4 +12,4 @@ RUN set -e \
 
 ENV PYTHONUNBUFFERED 1
 
-CMD ["python", "main.py"]
+ENTRYPOINT ["python", "main.py"]
