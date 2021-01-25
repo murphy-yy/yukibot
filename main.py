@@ -92,6 +92,12 @@ async def _mcping(ctx, address):
     await ctx.send(embeds=[embed])
 
 
+async def delete_roles(roles):
+    for role in roles:
+        print(f"削除中: {role} ({role.id})")
+        await role.delete()
+
+
 @slash.slash(
     name="color",
     guild_ids=guild_ids,
@@ -109,13 +115,10 @@ async def _color(ctx, web_color):
     await ctx.send(content=f":triumph: 不要な染料を削除して新たに付与しています…", hidden=True)
 
     roles = [r for r in ctx.author.roles if r.name == color_name]
-    print(f"編集中: {roles}")
 
     primary = roles.pop(0) if roles else None
 
-    if roles:
-        for role in roles:
-            await role.delete()
+    await delete_roles(roles)
 
     index = colour.Color(web_color)
     hex = index.get_hex_l()
@@ -136,10 +139,8 @@ async def _resetcolor(ctx):
     await ctx.send(content=f":cold_face: 全ての染料を削除しています…", hidden=True)
 
     roles = [r for r in ctx.author.roles if r.name == color_name]
-    print(f"削除中: {roles}")
 
-    for role in roles:
-        await role.delete()
+    await delete_roles(roles)
 
     await ctx.send(content=":sparkles: 名前の色がリセットされました。")
 
