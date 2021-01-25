@@ -1,6 +1,5 @@
+import argparse
 import base64
-import os
-import sys
 import tempfile
 
 import colour
@@ -9,15 +8,18 @@ from discord_slash import SlashCommand, SlashCommandOptionType
 from discord_slash.utils import manage_commands
 from mcstatus import MinecraftServer
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--token", help="ボットのトークンを指定します", required=True)
+parser.add_argument("--guild_id", help="ギルドIDを指定してコマンドの反映を高速化できます", nargs="+", type=int)
+parser.add_argument("--color_name", help="染料の名前は、ほとんどの場合、変更する必要はありません", default="すごい染料")
+
+args = parser.parse_args()
+
+if args.guild_id:
+    print(f"検証用サーバー: {args.guild_id}")
+
 client = discord.Client(intents=discord.Intents.all())
 slash = SlashCommand(client, auto_register=True, auto_delete=True)
-
-guild_ids = [int(id) for id in sys.argv[1:]]
-
-if guild_ids:
-    print(f"デバッグサーバー: {guild_ids}")
-
-color_name = "すごい染料"
 
 
 @client.event
@@ -30,7 +32,7 @@ async def on_slash_command_error(ctx, ex):
     await ctx.send(content=f"エラーが発生しました。\n```\n{ex}\n```")
 
 
-@slash.slash(name="stop", guild_ids=guild_ids, description="ボットを終了します。")
+@slash.slash(name="stop", guild_ids=args.guild_id, description="ボットを終了します。")
 async def _stop(ctx):
     await ctx.send(content=":scream: ボットを終了しています…", hidden=True)
 
@@ -53,7 +55,7 @@ def extract_information(sample):
 
 @slash.slash(
     name="mcping",
-    guild_ids=guild_ids,
+    guild_ids=args.guild_id,
     description="マイクラサーバーの接続をチェックします。",
     options=[
         manage_commands.create_option(
@@ -100,7 +102,7 @@ async def delete_roles(roles):
 
 @slash.slash(
     name="color",
-    guild_ids=guild_ids,
+    guild_ids=args.guild_id,
     description="名前の色を変更します。",
     options=[
         manage_commands.create_option(
@@ -114,7 +116,7 @@ async def delete_roles(roles):
 async def _color(ctx, web_color):
     await ctx.send(content=f":triumph: 不要な染料を削除して新たに付与しています…", hidden=True)
 
-    roles = [r for r in ctx.author.roles if r.name == color_name]
+    roles = [r for r in ctx.author.roles if r.name == args.color_name]
 
     primary = roles.pop(0) if roles else None
 
@@ -128,22 +130,21 @@ async def _color(ctx, web_color):
     if primary:
         await primary.edit(color=color)
     else:
-        role = await ctx.guild.create_role(name=color_name, color=color)
+        role = await ctx.guild.create_role(name=args.color_name, color=color)
         await ctx.author.add_roles(role)
 
     await ctx.send(content=f":paintbrush: 名前の色を {hex} ({value}) に変更しました。")
 
 
-@slash.slash(name="resetcolor", guild_ids=guild_ids, description="名前の色をリセットします。")
+@slash.slash(name="resetcolor", guild_ids=args.guild_id, description="名前の色をリセットします。")
 async def _resetcolor(ctx):
     await ctx.send(content=f":cold_face: 全ての染料を削除しています…", hidden=True)
 
-    roles = [r for r in ctx.author.roles if r.name == color_name]
+    roles = [r for r in ctx.author.roles if r.name == args.color_name]
 
     await delete_roles(roles)
 
     await ctx.send(content=":sparkles: 名前の色がリセットされました。")
 
 
-token = os.environ["TOKEN"]
-client.run(token)
+client.run(args.token)

@@ -10,4 +10,6 @@ RUN set -e \
   && pip install --no-cache-dir -r requirements.txt \
   && apk del .build-deps
 
-CMD ["python", "-u", "main.py"]
+ENV PYTHONUNBUFFERED 1
+
+CMD ["python", "main.py"]

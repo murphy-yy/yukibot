@@ -12,29 +12,34 @@
 
 ## 🚀 起動
 
+ヘルプの表示
+
+```console
+$ python main.py --help
+```
+
+起動
+
+```console
+$ python main.py --token <ボットのトークン>
+```
+
 ギルドIDを指定するとコマンドの反映が高速になります。
 
-```bash
-TOKEN="ボットのトークン" python -u main.py [ギルドID...]
+デバッグ環境では以下のコマンドを使用することをおすすめします。
+
+```console
+$ python main.py --token <ボットのトークン> --guild_id <ギルドID...>
 ```
 
 ## 🐳 Dockerで起動する
 
-```bash
-docker run -d \
-  --restart=always \
-  --name yukibot \
-  -e TOKEN="ボットのトークン" \
-  ghcr.io/yukileafx/yukibot:latest
+```console
+$ docker run -d --restart=always --name yukibot ghcr.io/yukileafx/yukibot:latest --token <ボットのトークン>
 ```
 
 また、[Watchtower](https://github.com/containrrr/watchtower)を使用して自動更新することもできます。
 
-```bash
-docker run -d \
-  --restart=always \
-  --name watchtower \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  containrrr/watchtower \
-    --interval 300
+```console
+$ docker run -d --restart=always --name watchtower -v /var/run/docker.sock:/var/run/docker.sock containrrr/watchtower --interval 300
 ```
