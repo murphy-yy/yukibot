@@ -6,7 +6,8 @@ import colour
 import discord
 from discord_slash import SlashCommand, SlashCommandOptionType
 from discord_slash.utils import manage_commands
-from mcstatus import MinecraftServer
+
+import minecraft_status
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--token", help="ボットのトークンを指定します", required=True)
@@ -39,20 +40,6 @@ async def _stop(ctx):
     await client.logout()
 
 
-def clean_description(o):
-    if isinstance(o, dict):
-        if "extra" in o.keys():
-            return "".join(map(lambda x: x["text"], o["extra"]))
-        else:
-            return o["text"]
-    else:
-        return o
-
-
-def extract_information(sample):
-    return "\n".join(map(lambda p: p.name, sample or []))
-
-
 @slash.slash(
     name="mcping",
     guild_ids=args.guild_id,
@@ -66,8 +53,7 @@ def extract_information(sample):
 async def _mcping(ctx, address):
     await ctx.send(content=f":tropical_drink: {address} に接続しています…", hidden=True)
 
-    server = MinecraftServer.lookup(address)
-    status = server.status()
+    status = await minecraft_status.connect(address)
 
     fav_b64_offset = len("data:image/png;base64,")
     fav_data = base64.b64decode(status.favicon[fav_b64_offset:])
@@ -84,12 +70,8 @@ async def _mcping(ctx, address):
         name="プレイヤー", value=f"{status.players.online} / {status.players.max}"
     )
     embed.add_field(name="バージョン", value=status.version.name or "なし")
-    embed.add_field(
-        name="説明", value=clean_description(status.description) or "なし", inline=False
-    )
-    embed.add_field(
-        name="細かい説明", value=extract_information(status.players.sample) or "なし"
-    )
+    embed.add_field(name="説明", value=status.clean_description or "なし", inline=False)
+    embed.add_field(name="細かい説明", value=status.information or "なし")
     embed.set_footer(text=f"{status.latency} ms で処理が完了しました。")
     await ctx.send(embeds=[embed])
 
