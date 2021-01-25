@@ -197,4 +197,111 @@ async def _vshot(ctx, url, timestamp):
         await ctx.channel.send(file=discord.File(output))
 
 
+@slash.slash(
+    name="vget",
+    guild_ids=args.guild_id,
+    description="動画を取得します。",
+    options=[
+        manage_commands.create_option(
+            "url",
+            "動画のURL",
+            SlashCommandOptionType.STRING,
+            True,
+        ),
+        manage_commands.create_option(
+            "codec",
+            "動画のフォーマット",
+            SlashCommandOptionType.STRING,
+            False,
+            choices=[
+                manage_commands.create_choice("m4a|mp4|mp4", "mp4 (m4a+mp4)"),
+                manage_commands.create_choice("webm|webm|webm", "webm (webm+webm)"),
+            ],
+        ),
+        manage_commands.create_option(
+            "quality",
+            "画質",
+            SlashCommandOptionType.INTEGER,
+            False,
+            choices=[
+                manage_commands.create_choice(144, "144p"),
+                manage_commands.create_choice(240, "240p"),
+                manage_commands.create_choice(360, "360p"),
+                manage_commands.create_choice(480, "480p"),
+                manage_commands.create_choice(720, "720p (HD)"),
+                manage_commands.create_choice(1080, "1080p (HD)"),
+            ],
+        ),
+        manage_commands.create_option(
+            "crop",
+            "切り抜きを行うかどうか",
+            SlashCommandOptionType.BOOLEAN,
+            False,
+        ),
+        manage_commands.create_option(
+            "crop_start",
+            "切り抜きを開始する時間 (例: 1:20)",
+            SlashCommandOptionType.STRING,
+            False,
+        ),
+        manage_commands.create_option(
+            "crop_duration",
+            "切り抜く期間 (例: 0:30)",
+            SlashCommandOptionType.STRING,
+            False,
+        ),
+    ],
+)
+async def _vget(
+    ctx,
+    url,
+    codec="m4a|mp4|mp4",
+    quality=360,
+    crop=True,
+    crop_start="0:00",
+    crop_duration="0:30",
+):
+    await ctx.send(content=f":inbox_tray: 動画を取得しています…", hidden=True)
+
+    acodec, vcodec, output_format = codec.split("|")
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        await proc.call(
+            [
+                "youtube-dl",
+                "--no-playlist",
+                "-f",
+                f"bestvideo[ext={vcodec}][height<={quality}]+bestaudio[ext={acodec}]/best[ext={output_format}][height<={quality}]",
+                "--merge-output-format",
+                output_format,
+                url,
+            ],
+            cwd=tmpdir,
+        )
+
+        workdir = pathlib.Path(tmpdir)
+
+        if crop:
+            for src in workdir.iterdir():
+                await proc.call(
+                    [
+                        "ffmpeg",
+                        "-ss",
+                        crop_start,
+                        "-i",
+                        src,
+                        "-to",
+                        crop_duration,
+                        "-async",
+                        "1",
+                        src.with_name(src.name + "-cropped" + src.suffix),
+                    ],
+                    cwd=tmpdir,
+                )
+                src.unlink()
+
+        for output in workdir.iterdir():
+            await ctx.channel.send(file=discord.File(output))
+
+
 client.run(args.token)
