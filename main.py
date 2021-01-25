@@ -1,6 +1,5 @@
 import argparse
 import base64
-import random
 import tempfile
 
 import colour
@@ -175,7 +174,7 @@ async def _vshot(ctx, url, timestamp):
     await ctx.send(content=f":frame_photo: 画像を生成しています…", hidden=True)
 
     with tempfile.NamedTemporaryFile(suffix=".jpg") as fp:
-        await proc.call(
+        await proc.call_in_tmpdir(
             [
                 "youtube-dl",
                 "-f",
@@ -183,8 +182,6 @@ async def _vshot(ctx, url, timestamp):
                 "--no-playlist",
                 "--exec",
                 f"ffmpeg -y -ss {timestamp} -i {{}} -vframes 1 {fp.name}; rm -f {{}}",
-                "-o",
-                f"{random.random()}.%(ext)s",
                 url,
             ]
         )
