@@ -1,5 +1,6 @@
 import argparse
 import base64
+import pathlib
 import tempfile
 
 import colour
@@ -41,6 +42,17 @@ async def _stop(ctx):
     await client.logout()
 
 
+async def upload_base64_image(favicon, channel):
+    offset = len("data:image/png;base64,")
+    data = base64.b64decode(favicon[offset:])
+
+    with tempfile.NamedTemporaryFile(suffix=".png") as fp:
+        fp.write(data)
+        uploaded = await channel.send(file=discord.File(fp.name))
+
+    return uploaded.attachments[0].url
+
+
 @slash.slash(
     name="mcping",
     guild_ids=args.guild_id,
@@ -56,17 +68,10 @@ async def _mcping(ctx, address):
 
     status = await minecraft_status.connect(address)
 
-    fav_b64_offset = len("data:image/png;base64,")
-    fav_data = base64.b64decode(status.favicon[fav_b64_offset:])
-
-    with tempfile.NamedTemporaryFile(suffix=".png") as fp:
-        fp.write(fav_data)
-        fav = await ctx.channel.send(file=discord.File(fp.name))
-
-    fav_url = fav.attachments[0].url
+    icon_url = await upload_base64_image(status.favicon, ctx.channel)
 
     embed = discord.Embed(title=f":white_check_mark: {address} の接続情報")
-    embed.set_thumbnail(url=fav_url)
+    embed.set_thumbnail(url=icon_url)
     embed.add_field(
         name="プレイヤー", value=f"{status.players.online} / {status.players.max}"
     )
@@ -173,20 +178,23 @@ async def _vthumbnail(ctx, url):
 async def _vshot(ctx, url, timestamp):
     await ctx.send(content=f":frame_photo: 画像を生成しています…", hidden=True)
 
-    with tempfile.NamedTemporaryFile(suffix=".jpg") as fp:
-        await proc.call_in_tmpdir(
+    with tempfile.TemporaryDirectory() as tmpdir:
+        output = pathlib.Path(tmpdir, "image.jpg")
+
+        await proc.call(
             [
                 "youtube-dl",
                 "-f",
                 "bestvideo[height<=720]/best[height<=720]",
                 "--no-playlist",
                 "--exec",
-                f"ffmpeg -y -ss {timestamp} -i {{}} -vframes 1 {fp.name}; rm -f {{}}",
+                f"ffmpeg -y -ss {timestamp} -i {{}} -vframes 1 {output}; rm -f {{}}",
                 url,
-            ]
+            ],
+            cwd=tmpdir,
         )
 
-        await ctx.channel.send(file=discord.File(fp.name))
+        await ctx.channel.send(file=discord.File(output))
 
 
 client.run(args.token)

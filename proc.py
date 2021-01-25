@@ -1,5 +1,4 @@
 import asyncio
-import tempfile
 
 
 async def call(cmd, **kwargs):
@@ -8,8 +7,3 @@ async def call(cmd, **kwargs):
     )
     stdout, _ = await proc.communicate()
     return stdout.decode()
-
-
-async def call_in_tmpdir(cmd):
-    with tempfile.TemporaryDirectory() as tmpdir:
-        await call(cmd, cwd=tmpdir)
