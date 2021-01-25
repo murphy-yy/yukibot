@@ -22,7 +22,7 @@ color_name = "すごい染料"
 
 @client.event
 async def on_ready():
-    print(f"{client.user} でログイン完了")
+    print(f"{client.user} ({client.user.id}) でログイン完了")
 
 
 @client.event
