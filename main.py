@@ -27,7 +27,7 @@ async def on_ready():
 
 @client.event
 async def on_slash_command_error(ctx, ex):
-    await ctx.send(content=f"エラーが発生しました。\n{ex}", hidden=True)
+    await ctx.send(content=f"エラーが発生しました。\n```\n{ex}\n```")
 
 
 @slash.slash(name="stop", guild_ids=guild_ids, description="ボットを終了します。")
